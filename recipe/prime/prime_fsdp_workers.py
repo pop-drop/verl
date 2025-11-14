@@ -127,7 +127,7 @@ class PRIMERewardModelWorker(Worker):
                 pretrained_model_name_or_path=local_path,
                 torch_dtype=torch_dtype,
                 config=reward_model_config,
-                attn_implementation="flash_attention_2",
+                attn_implementation="sdpa",
                 trust_remote_code=trust_remote_code,
             )
 
@@ -182,7 +182,7 @@ class PRIMERewardModelWorker(Worker):
                 pretrained_model_name_or_path=copy_local_path_from_hdfs(config.model.ref_path),
                 torch_dtype=torch_dtype,
                 config=reward_model_config,
-                attn_implementation="flash_attention_2",
+                attn_implementation="sdpa",
                 trust_remote_code=trust_remote_code,
             )
 

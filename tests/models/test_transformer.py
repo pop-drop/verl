@@ -47,7 +47,7 @@ def test_hf_casual_models():
         # config = AutoConfig.from_pretrained(test_case)
         with torch.device("cuda"):
             model = AutoModelForCausalLM.from_config(
-                config=config, torch_dtype=torch.bfloat16, attn_implementation="flash_attention_2"
+                config=config, torch_dtype=torch.bfloat16, attn_implementation="sdpa"
             )
             model = model.to(device="cuda")
         input_ids = torch.randint(low=0, high=config.vocab_size, size=(batch_size, seqlen), device="cuda")
@@ -119,7 +119,7 @@ def test_hf_value_models():
         config.hidden_dropout = 0
         with torch.device("cuda"):
             model = AutoModelForTokenClassification.from_config(
-                config=config, torch_dtype=torch.bfloat16, attn_implementation="flash_attention_2"
+                config=config, torch_dtype=torch.bfloat16, attn_implementation="sdpa"
             )
             model = model.to(device="cuda")
         input_ids = torch.randint(low=0, high=config.vocab_size, size=(batch_size, seqlen), device="cuda")
@@ -167,33 +167,33 @@ def test_attn_implementation_override():
     """Test that attn_implementation override config is properly respected."""
     # Test case 1: Test the actual extraction logic (no network required)
     test_cases = [
-        ({}, "flash_attention_2"),  # Default case
+        ({}, "sdpa"),  # Default case
         ({"attn_implementation": "eager"}, "eager"),  # Override case
         ({"attn_implementation": "sdpa"}, "sdpa"),  # Another override
-        ({"other_config": "value"}, "flash_attention_2"),  # No attn_implementation key
+        ({"other_config": "value"}, "sdpa"),  # No attn_implementation key
     ]
 
     for override_config, expected in test_cases:
-        actual = override_config.get("attn_implementation", "flash_attention_2")
+        actual = override_config.get("attn_implementation", "sdpa")
         assert actual == expected, f"Expected {expected}, got {actual} for config {override_config}"
 
     # Test case 2: Test with local config creation (simulate FSDP worker behavior)
     # Test default behavior
     override_config_default = {}
-    attn_implementation_default = override_config_default.get("attn_implementation", "flash_attention_2")
-    assert attn_implementation_default == "flash_attention_2"
+    attn_implementation_default = override_config_default.get("attn_implementation", "sdpa")
+    assert attn_implementation_default == "sdpa"
 
     # Test override behavior
     override_config_eager = {"attn_implementation": "eager"}
-    attn_implementation_eager = override_config_eager.get("attn_implementation", "flash_attention_2")
+    attn_implementation_eager = override_config_eager.get("attn_implementation", "sdpa")
     assert attn_implementation_eager == "eager"
 
     # Test that we can create a config with specific attn_implementation
     config_with_eager = LlamaConfig(num_hidden_layers=1, _attn_implementation="eager")
     assert config_with_eager._attn_implementation == "eager"
 
-    config_with_flash = LlamaConfig(num_hidden_layers=1, _attn_implementation="flash_attention_2")
-    assert config_with_flash._attn_implementation == "flash_attention_2"
+    config_with_flash = LlamaConfig(num_hidden_layers=1, _attn_implementation="sdpa")
+    assert config_with_flash._attn_implementation == "sdpa"
 
     print("✓ All attn_implementation override config tests passed")
 
@@ -205,13 +205,13 @@ def test_fsdp_worker_attn_implementation_integration():
     mock_override_config = {"attn_implementation": "eager"}
 
     # Test the exact logic used in FSDP workers
-    attn_implementation = mock_override_config.get("attn_implementation", "flash_attention_2")
+    attn_implementation = mock_override_config.get("attn_implementation", "sdpa")
     assert attn_implementation == "eager"
 
     # Test with empty config (should default)
     mock_override_config_empty = {}
-    attn_implementation_default = mock_override_config_empty.get("attn_implementation", "flash_attention_2")
-    assert attn_implementation_default == "flash_attention_2"
+    attn_implementation_default = mock_override_config_empty.get("attn_implementation", "sdpa")
+    assert attn_implementation_default == "sdpa"
 
     # Test that the parameter would be passed correctly to both AutoConfig and Model
     expected_calls = [

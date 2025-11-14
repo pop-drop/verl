@@ -206,7 +206,7 @@ class RolloutWorker(ActorRolloutRefWorker):
 
         # override model kwargs
         actor_model_config = AutoConfig.from_pretrained(
-            local_path, trust_remote_code=trust_remote_code, attn_implementation="flash_attention_2"
+            local_path, trust_remote_code=trust_remote_code, attn_implementation="sdpa"
         )
 
         # patch for kimi-vl

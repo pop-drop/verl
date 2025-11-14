@@ -48,23 +48,23 @@ class TestFSDPAttnImplementation:
 
         # Test case 1: Default behavior
         override_config = {}
-        attn_impl = override_config.get("attn_implementation", "flash_attention_2")
-        assert attn_impl == "flash_attention_2"
+        attn_impl = override_config.get("attn_implementation", "sdpa")
+        assert attn_impl == "sdpa"
 
         # Test case 2: Override to eager
         override_config = {"attn_implementation": "eager"}
-        attn_impl = override_config.get("attn_implementation", "flash_attention_2")
+        attn_impl = override_config.get("attn_implementation", "sdpa")
         assert attn_impl == "eager"
 
         # Test case 3: Override to sdpa
         override_config = {"attn_implementation": "sdpa"}
-        attn_impl = override_config.get("attn_implementation", "flash_attention_2")
+        attn_impl = override_config.get("attn_implementation", "sdpa")
         assert attn_impl == "sdpa"
 
         # Test case 4: Other configs don't affect attn_implementation
         override_config = {"other_setting": "value", "dropout": 0.1}
-        attn_impl = override_config.get("attn_implementation", "flash_attention_2")
-        assert attn_impl == "flash_attention_2"
+        attn_impl = override_config.get("attn_implementation", "sdpa")
+        assert attn_impl == "sdpa"
 
     @patch("transformers.AutoConfig.from_pretrained")
     @patch("transformers.AutoModelForCausalLM.from_pretrained")
@@ -83,7 +83,7 @@ class TestFSDPAttnImplementation:
 
         # Test data
         test_cases = [
-            ({}, "flash_attention_2"),  # Default
+            ({}, "sdpa"),  # Default
             ({"attn_implementation": "eager"}, "eager"),  # Override to eager
             ({"attn_implementation": "sdpa"}, "sdpa"),  # Override to sdpa
         ]
@@ -94,7 +94,7 @@ class TestFSDPAttnImplementation:
             mock_model_from_pretrained.reset_mock()
 
             # Simulate the logic from FSDP workers
-            attn_implementation = override_config.get("attn_implementation", "flash_attention_2")
+            attn_implementation = override_config.get("attn_implementation", "sdpa")
 
             # This simulates what happens in _build_model_optimizer
             AutoConfig.from_pretrained("test_path", trust_remote_code=False, attn_implementation=attn_implementation)
@@ -121,7 +121,7 @@ class TestFSDPAttnImplementation:
 
         # Test with override config
         override_config = {"attn_implementation": "eager"}
-        attn_implementation = override_config.get("attn_implementation", "flash_attention_2")
+        attn_implementation = override_config.get("attn_implementation", "sdpa")
 
         # This simulates what happens in _build_model_optimizer
         AutoModelForCausalLM.from_pretrained(
@@ -156,7 +156,7 @@ class TestFSDPAttnImplementation:
         override_model_config = OmegaConf.to_container(OmegaConf.create(omegaconf.model.get("override_config", {})))
 
         # Test extraction
-        attn_implementation = override_model_config.get("attn_implementation", "flash_attention_2")
+        attn_implementation = override_model_config.get("attn_implementation", "sdpa")
         assert attn_implementation == "eager"
 
         # Test that other configs are preserved
@@ -188,7 +188,7 @@ class TestFSDPAttnImplementation:
         )
 
         # Verify extraction works
-        attn_implementation = override_model_config.get("attn_implementation", "flash_attention_2")
+        attn_implementation = override_model_config.get("attn_implementation", "sdpa")
         assert attn_implementation == "eager"
 
     def test_backward_compatibility(self):
@@ -196,43 +196,43 @@ class TestFSDPAttnImplementation:
 
         # Test case 1: No override_config at all (old behavior)
         config_without_override = {}
-        attn_implementation = config_without_override.get("attn_implementation", "flash_attention_2")
-        assert attn_implementation == "flash_attention_2"
+        attn_implementation = config_without_override.get("attn_implementation", "sdpa")
+        assert attn_implementation == "sdpa"
 
         # Test case 2: Empty override_config
         config_with_empty_override = {"override_config": {}}
         override_config = config_with_empty_override.get("override_config", {})
-        attn_implementation = override_config.get("attn_implementation", "flash_attention_2")
-        assert attn_implementation == "flash_attention_2"
+        attn_implementation = override_config.get("attn_implementation", "sdpa")
+        assert attn_implementation == "sdpa"
 
         # Test case 3: override_config with other settings but no attn_implementation
         config_with_other_overrides = {"override_config": {"dropout": 0.1, "hidden_size": 1024}}
         override_config = config_with_other_overrides.get("override_config", {})
-        attn_implementation = override_config.get("attn_implementation", "flash_attention_2")
-        assert attn_implementation == "flash_attention_2"
+        attn_implementation = override_config.get("attn_implementation", "sdpa")
+        assert attn_implementation == "sdpa"
 
     def test_critic_attn_implementation_extraction_logic(self):
         """Test the core logic for extracting attn_implementation from override config for CriticWorker."""
 
         # Test case 1: Default behavior for critic
         override_config = {}
-        attn_impl = override_config.get("attn_implementation", "flash_attention_2")
-        assert attn_impl == "flash_attention_2"
+        attn_impl = override_config.get("attn_implementation", "sdpa")
+        assert attn_impl == "sdpa"
 
         # Test case 2: Override to eager for critic
         override_config = {"attn_implementation": "eager"}
-        attn_impl = override_config.get("attn_implementation", "flash_attention_2")
+        attn_impl = override_config.get("attn_implementation", "sdpa")
         assert attn_impl == "eager"
 
         # Test case 3: Override to sdpa for critic
         override_config = {"attn_implementation": "sdpa"}
-        attn_impl = override_config.get("attn_implementation", "flash_attention_2")
+        attn_impl = override_config.get("attn_implementation", "sdpa")
         assert attn_impl == "sdpa"
 
         # Test case 4: Other configs don't affect attn_implementation for critic
         override_config = {"other_setting": "value", "dropout": 0.1}
-        attn_impl = override_config.get("attn_implementation", "flash_attention_2")
-        assert attn_impl == "flash_attention_2"
+        attn_impl = override_config.get("attn_implementation", "sdpa")
+        assert attn_impl == "sdpa"
 
     @patch("transformers.AutoConfig.from_pretrained")
     def test_critic_attn_implementation_passed_to_autoconfig(self, mock_config_from_pretrained):
@@ -247,7 +247,7 @@ class TestFSDPAttnImplementation:
 
         # Test data for critic model
         test_cases = [
-            ({}, "flash_attention_2"),  # Default
+            ({}, "sdpa"),  # Default
             ({"attn_implementation": "eager"}, "eager"),  # Override to eager
             ({"attn_implementation": "sdpa"}, "sdpa"),  # Override to sdpa
         ]
@@ -257,7 +257,7 @@ class TestFSDPAttnImplementation:
             mock_config_from_pretrained.reset_mock()
 
             # Simulate the logic from CriticWorker _build_critic_model_optimizer
-            attn_implementation = override_config.get("attn_implementation", "flash_attention_2")
+            attn_implementation = override_config.get("attn_implementation", "sdpa")
 
             # This simulates what should happen in CriticWorker._build_critic_model_optimizer
             # (This is where the fix needs to be applied in the actual implementation)
@@ -293,7 +293,7 @@ class TestFSDPAttnImplementation:
         )
 
         # Test extraction for critic
-        attn_implementation = override_model_config.get("attn_implementation", "flash_attention_2")
+        attn_implementation = override_model_config.get("attn_implementation", "sdpa")
         assert attn_implementation == "eager"
 
         # Test that other configs are preserved for critic
@@ -325,7 +325,7 @@ class TestFSDPAttnImplementation:
         )
 
         # Verify extraction works for critic
-        attn_implementation = override_model_config.get("attn_implementation", "flash_attention_2")
+        attn_implementation = override_model_config.get("attn_implementation", "sdpa")
         assert attn_implementation == "eager"
 
     def test_both_actor_and_critic_configuration(self):
@@ -343,13 +343,13 @@ class TestFSDPAttnImplementation:
         actor_override_config = OmegaConf.to_container(
             OmegaConf.create(omegaconf.actor_rollout_ref.model.get("override_config", {}))
         )
-        actor_attn_implementation = actor_override_config.get("attn_implementation", "flash_attention_2")
+        actor_attn_implementation = actor_override_config.get("attn_implementation", "sdpa")
 
         # Extract critic override config
         critic_override_config = OmegaConf.to_container(
             OmegaConf.create(omegaconf.critic.model.get("override_config", {}))
         )
-        critic_attn_implementation = critic_override_config.get("attn_implementation", "flash_attention_2")
+        critic_attn_implementation = critic_override_config.get("attn_implementation", "sdpa")
 
         # Verify both can be configured independently
         assert actor_attn_implementation == "eager"
@@ -360,20 +360,20 @@ class TestFSDPAttnImplementation:
 
         # Test case 1: No override_config at all for critic (old behavior)
         config_without_override = {}
-        attn_implementation = config_without_override.get("attn_implementation", "flash_attention_2")
-        assert attn_implementation == "flash_attention_2"
+        attn_implementation = config_without_override.get("attn_implementation", "sdpa")
+        assert attn_implementation == "sdpa"
 
         # Test case 2: Empty override_config for critic
         config_with_empty_override = {"override_config": {}}
         override_config = config_with_empty_override.get("override_config", {})
-        attn_implementation = override_config.get("attn_implementation", "flash_attention_2")
-        assert attn_implementation == "flash_attention_2"
+        attn_implementation = override_config.get("attn_implementation", "sdpa")
+        assert attn_implementation == "sdpa"
 
         # Test case 3: override_config with other settings but no attn_implementation for critic
         config_with_other_overrides = {"override_config": {"dropout": 0.1, "num_labels": 1}}
         override_config = config_with_other_overrides.get("override_config", {})
-        attn_implementation = override_config.get("attn_implementation", "flash_attention_2")
-        assert attn_implementation == "flash_attention_2"
+        attn_implementation = override_config.get("attn_implementation", "sdpa")
+        assert attn_implementation == "sdpa"
 
 
 def test_attn_implementation_fix_integration():
@@ -394,7 +394,7 @@ def test_attn_implementation_fix_integration():
     )
 
     # Step 3: Apply the fix logic
-    attn_implementation = override_model_config.get("attn_implementation", "flash_attention_2")
+    attn_implementation = override_model_config.get("attn_implementation", "sdpa")
 
     # Step 4: Verify the fix works
     assert attn_implementation == "eager"
@@ -424,7 +424,7 @@ def test_critic_attn_implementation_fix_integration():
     override_model_config = OmegaConf.to_container(OmegaConf.create(omegaconf.critic.model.get("override_config", {})))
 
     # Step 3: Apply the fix logic (what needs to be implemented in CriticWorker)
-    attn_implementation = override_model_config.get("attn_implementation", "flash_attention_2")
+    attn_implementation = override_model_config.get("attn_implementation", "sdpa")
 
     # Step 4: Verify the fix works for critic
     assert attn_implementation == "sdpa"
@@ -464,8 +464,8 @@ def test_complete_training_configuration():
     critic_override_config = OmegaConf.to_container(OmegaConf.create(omegaconf.critic.model.get("override_config", {})))
 
     # Apply the fix logic for both
-    actor_attn_implementation = actor_override_config.get("attn_implementation", "flash_attention_2")
-    critic_attn_implementation = critic_override_config.get("attn_implementation", "flash_attention_2")
+    actor_attn_implementation = actor_override_config.get("attn_implementation", "sdpa")
+    critic_attn_implementation = critic_override_config.get("attn_implementation", "sdpa")
 
     # Verify both configurations work independently
     assert actor_attn_implementation == "eager"

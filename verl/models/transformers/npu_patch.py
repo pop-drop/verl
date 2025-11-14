@@ -179,7 +179,7 @@ def _check_and_enable_flash_attn_2(
     Checks the availability of Flash Attention 2 and compatibility with the current model.
 
     If all checks pass and `hard_check_only` is False, the method will set the config attribute
-    `attn_implementation` to "flash_attention_2" so that the model can initialize
+    `attn_implementation` to "sdpa" so that the model can initialize
     the correct attention module.
     """
     if not cls._supports_flash_attn_2:
@@ -190,7 +190,7 @@ def _check_and_enable_flash_attn_2(
         )
 
     if not hard_check_only:
-        config._attn_implementation = "flash_attention_2"
+        config._attn_implementation = "sdpa"
     logger.info("Detect using FlashAttention2 on Ascend NPU.")
     return config
 

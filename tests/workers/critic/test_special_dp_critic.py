@@ -212,8 +212,8 @@ class TestCriticWorker(unittest.TestCase):
         test_cases = [
             ("eager", "eager"),
             ("sdpa", "sdpa"),
-            ("flash_attention_2", "flash_attention_2"),
-            (None, "flash_attention_2"),  # Default case
+            ("sdpa", "sdpa"),
+            (None, "sdpa"),  # Default case
         ]
 
         for override_value, expected_value in test_cases:
@@ -247,7 +247,7 @@ class TestCriticWorker(unittest.TestCase):
 
             # Test the extraction logic that should happen in CriticWorker._build_critic_model_optimizer
             override_config = OmegaConf.to_container(OmegaConf.create(test_config.model.get("override_config", {})))
-            extracted_attn_implementation = override_config.get("attn_implementation", "flash_attention_2")
+            extracted_attn_implementation = override_config.get("attn_implementation", "sdpa")
 
             # Verify the extraction works correctly
             self.assertEqual(
@@ -261,7 +261,7 @@ class TestCriticWorker(unittest.TestCase):
 
         # Test configuration scenarios
         test_scenarios = [
-            {"name": "default_flash_attention", "override_config": {}, "expected_attn": "flash_attention_2"},
+            {"name": "default_flash_attention", "override_config": {}, "expected_attn": "sdpa"},
             {"name": "eager_override", "override_config": {"attn_implementation": "eager"}, "expected_attn": "eager"},
             {"name": "sdpa_override", "override_config": {"attn_implementation": "sdpa"}, "expected_attn": "sdpa"},
             {
@@ -277,7 +277,7 @@ class TestCriticWorker(unittest.TestCase):
                 override_config = scenario["override_config"]
 
                 # Test the extraction logic
-                extracted_attn = override_config.get("attn_implementation", "flash_attention_2")
+                extracted_attn = override_config.get("attn_implementation", "sdpa")
 
                 # Verify correct extraction
                 self.assertEqual(extracted_attn, scenario["expected_attn"], f"Failed for scenario {scenario['name']}")
@@ -303,7 +303,7 @@ class TestCriticWorker(unittest.TestCase):
         )
 
         # Test extraction
-        attn_implementation = override_model_config.get("attn_implementation", "flash_attention_2")
+        attn_implementation = override_model_config.get("attn_implementation", "sdpa")
         self.assertEqual(attn_implementation, "eager")
 
     def test_critic_backward_compatibility(self):
@@ -311,19 +311,19 @@ class TestCriticWorker(unittest.TestCase):
 
         # Test cases for backward compatibility
         compatibility_tests = [
-            {"name": "no_override_config", "config": {}, "expected": "flash_attention_2"},
-            {"name": "empty_override_config", "config": {"override_config": {}}, "expected": "flash_attention_2"},
+            {"name": "no_override_config", "config": {}, "expected": "sdpa"},
+            {"name": "empty_override_config", "config": {"override_config": {}}, "expected": "sdpa"},
             {
                 "name": "other_overrides_only",
                 "config": {"override_config": {"dropout": 0.1, "hidden_size": 768}},
-                "expected": "flash_attention_2",
+                "expected": "sdpa",
             },
         ]
 
         for test in compatibility_tests:
             with self.subTest(test=test["name"]):
                 override_config = test["config"].get("override_config", {})
-                attn_implementation = override_config.get("attn_implementation", "flash_attention_2")
+                attn_implementation = override_config.get("attn_implementation", "sdpa")
 
                 self.assertEqual(
                     attn_implementation, test["expected"], f"Backward compatibility failed for {test['name']}"
@@ -344,11 +344,11 @@ class TestCriticWorker(unittest.TestCase):
         actor_override = OmegaConf.to_container(
             OmegaConf.create(omegaconf.actor_rollout_ref.model.get("override_config", {}))
         )
-        actor_attn = actor_override.get("attn_implementation", "flash_attention_2")
+        actor_attn = actor_override.get("attn_implementation", "sdpa")
 
         # Extract critic config
         critic_override = OmegaConf.to_container(OmegaConf.create(omegaconf.critic.model.get("override_config", {})))
-        critic_attn = critic_override.get("attn_implementation", "flash_attention_2")
+        critic_attn = critic_override.get("attn_implementation", "sdpa")
 
         # Verify independent configuration
         self.assertEqual(actor_attn, "eager")
